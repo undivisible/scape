@@ -1,0 +1,429 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02570BBF7488FD8D61BC6452 /* HostController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AD307253F83F6340B5CB30 /* HostController.swift */; };
+		27F0C0F5F056E58530A23FCC /* MirageKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6F6507F5F54503CF0C55BF3E /* MirageKit */; };
+		69A19603D6A687832A4B439C /* HostPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A00920ED940D6087963B53E /* HostPickerView.swift */; };
+		831513EBA20FDC5B83A750F7 /* ScapeHostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B092791312DD3B5D31D5EC /* ScapeHostApp.swift */; };
+		96299FAB42F1D801AE3B44DB /* MirageKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9FA20A8EE8250BC98D3085D5 /* MirageKit */; };
+		C539646D40ABE3E09D74B0BF /* ScapeClientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29BB772BAD7F508C620C257D /* ScapeClientApp.swift */; };
+		DD6210A8C37C20377E8605D9 /* ClientController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 526F0DF8F61A0AE59EA582DB /* ClientController.swift */; };
+		ED313E3E5953D7033FE7FFCF /* ScapeSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B9CEF27299509E9755A99C /* ScapeSpace.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1FCF93E67B6C296F94326E6F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		271D2410C21326248BAFC202 /* ScapeHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ScapeHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		29BB772BAD7F508C620C257D /* ScapeClientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScapeClientApp.swift; sourceTree = "<group>"; };
+		31AD307253F83F6340B5CB30 /* HostController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostController.swift; sourceTree = "<group>"; };
+		45B092791312DD3B5D31D5EC /* ScapeHostApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScapeHostApp.swift; sourceTree = "<group>"; };
+		4BA45D5BBF6717919A48B867 /* ScapeClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ScapeClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		526F0DF8F61A0AE59EA582DB /* ClientController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientController.swift; sourceTree = "<group>"; };
+		8A00920ED940D6087963B53E /* HostPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostPickerView.swift; sourceTree = "<group>"; };
+		9C1F3ECF957E7A734E3D5092 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B0B9CEF27299509E9755A99C /* ScapeSpace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScapeSpace.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0EEFA9B96B04C7FCE1BA45CF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96299FAB42F1D801AE3B44DB /* MirageKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		97A322B4F2927A60D1DA38B2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27F0C0F5F056E58530A23FCC /* MirageKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4749066045645B93F490664A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4BA45D5BBF6717919A48B867 /* ScapeClient.app */,
+				271D2410C21326248BAFC202 /* ScapeHost.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CC090C3A4DE3DD33EAA5CA29 = {
+			isa = PBXGroup;
+			children = (
+				F52A8B6B54ECDC5C788D463A /* ScapeClient */,
+				DFA216187479C6E0B28C7E96 /* ScapeHost */,
+				4749066045645B93F490664A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DFA216187479C6E0B28C7E96 /* ScapeHost */ = {
+			isa = PBXGroup;
+			children = (
+				31AD307253F83F6340B5CB30 /* HostController.swift */,
+				1FCF93E67B6C296F94326E6F /* Info.plist */,
+				45B092791312DD3B5D31D5EC /* ScapeHostApp.swift */,
+			);
+			path = ScapeHost;
+			sourceTree = "<group>";
+		};
+		F52A8B6B54ECDC5C788D463A /* ScapeClient */ = {
+			isa = PBXGroup;
+			children = (
+				526F0DF8F61A0AE59EA582DB /* ClientController.swift */,
+				8A00920ED940D6087963B53E /* HostPickerView.swift */,
+				9C1F3ECF957E7A734E3D5092 /* Info.plist */,
+				29BB772BAD7F508C620C257D /* ScapeClientApp.swift */,
+				B0B9CEF27299509E9755A99C /* ScapeSpace.swift */,
+			);
+			path = ScapeClient;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		50FEDFF8435B21F03E549CA2 /* ScapeClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1B472178B4E12DAFF7A2982 /* Build configuration list for PBXNativeTarget "ScapeClient" */;
+			buildPhases = (
+				7E47D4F197F4FF748AAC62EE /* Sources */,
+				97A322B4F2927A60D1DA38B2 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ScapeClient;
+			packageProductDependencies = (
+				6F6507F5F54503CF0C55BF3E /* MirageKit */,
+			);
+			productName = ScapeClient;
+			productReference = 4BA45D5BBF6717919A48B867 /* ScapeClient.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B1D70FEAC71D8C53D6227E4B /* ScapeHost */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2E97FF3D14A0AA16717A2F9E /* Build configuration list for PBXNativeTarget "ScapeHost" */;
+			buildPhases = (
+				712C3237DAF0E1D3C11937B7 /* Sources */,
+				0EEFA9B96B04C7FCE1BA45CF /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ScapeHost;
+			packageProductDependencies = (
+				9FA20A8EE8250BC98D3085D5 /* MirageKit */,
+			);
+			productName = ScapeHost;
+			productReference = 271D2410C21326248BAFC202 /* ScapeHost.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E49F08FC68F0FEFEEC5BB240 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = 0F00A34AC700ED4B3793BDDE /* Build configuration list for PBXProject "Scape" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CC090C3A4DE3DD33EAA5CA29;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DF612DA20208A670D80E451C /* XCRemoteSwiftPackageReference "miragekit" */,
+			);
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				50FEDFF8435B21F03E549CA2 /* ScapeClient */,
+				B1D70FEAC71D8C53D6227E4B /* ScapeHost */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		712C3237DAF0E1D3C11937B7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				02570BBF7488FD8D61BC6452 /* HostController.swift in Sources */,
+				831513EBA20FDC5B83A750F7 /* ScapeHostApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7E47D4F197F4FF748AAC62EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD6210A8C37C20377E8605D9 /* ClientController.swift in Sources */,
+				69A19603D6A687832A4B439C /* HostPickerView.swift in Sources */,
+				C539646D40ABE3E09D74B0BF /* ScapeClientApp.swift in Sources */,
+				ED313E3E5953D7033FE7FFCF /* ScapeSpace.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		00752903C6353A309A92D412 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = LZ3NL5434Q;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = ScapeClient/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.undivisible.scapeclient;
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		298684D6697CB85F2828A967 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = LZ3NL5434Q;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = ScapeClient/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.undivisible.scapeclient;
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		3C7FA6E92AA0C9F60040996F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = ScapeHost/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.scape.ScapeHost;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		B93358D57B9074A63525F53A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		C36484844706A2DB02EDD146 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E4FE36F0FA3578625C6FA1A6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = ScapeHost/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.scape.ScapeHost;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0F00A34AC700ED4B3793BDDE /* Build configuration list for PBXProject "Scape" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C36484844706A2DB02EDD146 /* Debug */,
+				B93358D57B9074A63525F53A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2E97FF3D14A0AA16717A2F9E /* Build configuration list for PBXNativeTarget "ScapeHost" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E4FE36F0FA3578625C6FA1A6 /* Debug */,
+				3C7FA6E92AA0C9F60040996F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E1B472178B4E12DAFF7A2982 /* Build configuration list for PBXNativeTarget "ScapeClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00752903C6353A309A92D412 /* Debug */,
+				298684D6697CB85F2828A967 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		DF612DA20208A670D80E451C /* XCRemoteSwiftPackageReference "miragekit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/undivisible/miragekit.git";
+			requirement = {
+				branch = "visionos-fixes";
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6F6507F5F54503CF0C55BF3E /* MirageKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF612DA20208A670D80E451C /* XCRemoteSwiftPackageReference "miragekit" */;
+			productName = MirageKit;
+		};
+		9FA20A8EE8250BC98D3085D5 /* MirageKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF612DA20208A670D80E451C /* XCRemoteSwiftPackageReference "miragekit" */;
+			productName = MirageKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E49F08FC68F0FEFEEC5BB240 /* Project object */;
+}

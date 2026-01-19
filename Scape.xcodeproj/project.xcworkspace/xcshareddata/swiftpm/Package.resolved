@@ -1,0 +1,15 @@
+{
+  "originHash" : "9d2cd9141ccbeba2967348f04a7fb16f9a384837b87dae0fe59eaf29051040b5",
+  "pins" : [
+    {
+      "identity" : "miragekit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/undivisible/miragekit.git",
+      "state" : {
+        "branch" : "visionos-fixes",
+        "revision" : "0bdbe59d5d49073432958de531a3035092a6b70d"
+      }
+    }
+  ],
+  "version" : 3
+}

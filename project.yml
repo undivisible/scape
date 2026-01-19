@@ -1,0 +1,29 @@
+name: Scape
+options:
+  bundleIdPrefix: com.scape
+targets:
+  ScapeHost:
+    type: application
+    platform: macOS
+    deploymentTarget: "26.0"
+    sources: [ScapeHost]
+    settings:
+      INFOPLIST_FILE: ScapeHost/Info.plist
+    dependencies:
+      - package: MirageKit
+  
+  ScapeClient:
+    type: application
+    platform: visionOS
+    deploymentTarget: "26.0"
+    sources: [ScapeClient]
+    settings:
+      INFOPLIST_FILE: ScapeClient/Info.plist
+      ENABLE_BITCODE: NO
+    dependencies:
+      - package: MirageKit
+
+packages:
+  MirageKit:
+    url: https://github.com/undivisible/miragekit.git
+    branch: visionos-fixes
