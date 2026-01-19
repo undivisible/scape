@@ -9,7 +9,9 @@ struct ScapeClientApp: App {
         WindowGroup {
             HostPickerView(controller: controller)
         }
-        .windowStyle(.plain) // Glassy look
+        .windowStyle(.plain)
+        .defaultSize(width: 600, height: 500)
+
         
         #if os(visionOS)
         ImmersiveSpace(id: "scape_space") {

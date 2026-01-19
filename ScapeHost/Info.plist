@@ -21,5 +21,7 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Scape Host needs local network access to stream to clients.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Scape Host needs access to capture your screen to stream it to your Vision Pro.</string>
 </dict>
 </plist>

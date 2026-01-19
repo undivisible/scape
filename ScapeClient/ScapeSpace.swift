@@ -7,64 +7,75 @@ struct ScapeSpace: View {
     
     var body: some View {
         ZStack {
-            // Simple placeholder for streams (avoids problematic MirageStreamContentView)
+            // Main content area would go here
+            // For now, just status
+            
             VStack {
-                Text("Connected to \(controller.connectedHost?.name ?? "Unknown")")
-                    .font(.title)
+                Text("Connected to")
+                    .font(.title3)
                     .foregroundStyle(.secondary)
+                Text(controller.connectedHost?.name ?? "Unknown")
+                    .font(.extraLargeTitle)
+                    .foregroundStyle(.primary)
                 
                 Text("\(controller.activeStreams.count) active streams")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Capsule())
             }
+            .opacity(0.6)
             
-            // Window picker HUD
+            // HUD
             VStack {
                 Spacer()
                 
                 if !controller.availableWindows.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
+                        HStack(spacing: 24) {
                             ForEach(controller.availableWindows, id: \.id) { window in
                                 Button {
                                     controller.startStream(for: window)
                                 } label: {
-                                    VStack(spacing: 8) {
-                                        Image(systemName: "macwindow")
-                                            .font(.system(size: 32))
-                                            .symbolRenderingMode(.hierarchical)
+                                    VStack(spacing: 12) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(.regularMaterial)
+                                                .frame(width: 80, height: 80)
+                                            
+                                            Image(systemName: "macwindow")
+                                                .font(.system(size: 32))
+                                                .foregroundStyle(.white)
+                                                .symbolEffect(.bounce.down, value: true)
+                                        }
                                         
                                         Text(window.title ?? "Window")
                                             .font(.caption)
-                                            .lineLimit(2)
-                                            .multilineTextAlignment(.center)
-                                            .frame(width: 120)
+                                            .lineLimit(1)
+                                            .frame(width: 100)
                                     }
                                     .padding(16)
-                                    .frame(width: 140, height: 120)
-                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                                    .visionGlassBackground()
                                 }
                                 .buttonStyle(.plain)
+                                .visionHoverEffect()
                             }
                         }
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 24)
+                        .padding(.horizontal, 40)
+                        .padding(.vertical, 30)
                     }
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 24))
-                    .padding(.bottom, 40)
                 } else {
-                    VStack {
+                    HStack(spacing: 12) {
                         ProgressView()
                             .controlSize(.large)
-                        Text("Loading windows...")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Text("Waiting for windows...")
+                            .font(.headline)
                     }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    .padding(.bottom, 40)
+                    .padding(30)
+                    .visionGlassBackground()
+                    .padding(.bottom, 50)
                 }
             }
+            .padding(.bottom, 20)
         }
     }
 }
