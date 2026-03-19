@@ -13,7 +13,7 @@ struct HostDashboardView: View {
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
-                    if !controller.pendingConnectionApprovals.isEmpty || !controller.pendingStreamApprovals.isEmpty {
+                    if !controller.pendingConnectionApprovals.isEmpty {
                         approvalsSection
                     }
 
@@ -73,27 +73,6 @@ struct HostDashboardView: View {
                 }
             }
 
-            if !controller.pendingStreamApprovals.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Stream Requests")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-
-                    ForEach(controller.pendingStreamApprovals) { request in
-                        approvalCard(
-                            title: request.window.displayName,
-                            subtitle: request.client.name,
-                            detail: request.window.application?.name ?? "Window stream",
-                            requestedAt: request.requestedAt
-                        ) {
-                            approvalActions(
-                                onReject: { controller.rejectStream(request) },
-                                onApprove: { controller.approveStream(request) }
-                            )
-                        }
-                    }
-                }
-            }
         }
         .padding(16)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))

@@ -1,6 +1,5 @@
 import Foundation
 import MirageKit
-import ScreenCaptureKit
 
 @MainActor
 final class HostController: ObservableObject, MirageHostDelegate {
@@ -10,23 +9,14 @@ final class HostController: ObservableObject, MirageHostDelegate {
         let requestedAt: Date
     }
 
-    struct PendingStreamApproval: Identifiable {
-        let id: UUID
-        let client: MirageConnectedClient
-        let window: MirageWindow
-        let requestedAt: Date
-    }
-
     private let hostService = MirageHostService()
 
     @Published var status: String = "Initializing..."
     @Published var connectedClients: [MirageConnectedClient] = []
     @Published var pendingConnectionApprovals: [PendingConnectionApproval] = []
-    @Published var pendingStreamApprovals: [PendingStreamApproval] = []
 
     private var serviceStatus: String = "Initializing..."
     private var pendingConnectionHandlers: [UUID: @Sendable (Bool) -> Void] = [:]
-    private var pendingStreamDecisions: [UUID: Bool] = [:]
 
     init() {
         hostService.delegate = self
@@ -72,18 +62,6 @@ final class HostController: ObservableObject, MirageHostDelegate {
         refreshStatus()
     }
 
-    func approveStream(_ request: PendingStreamApproval) {
-        pendingStreamDecisions[request.id] = true
-        pendingStreamApprovals.removeAll { $0.id == request.id }
-        refreshStatus()
-    }
-
-    func rejectStream(_ request: PendingStreamApproval) {
-        pendingStreamDecisions[request.id] = false
-        pendingStreamApprovals.removeAll { $0.id == request.id }
-        refreshStatus()
-    }
-
     // MARK: - MirageHostDelegate
 
     func hostService(
@@ -116,39 +94,8 @@ final class HostController: ObservableObject, MirageHostDelegate {
             pendingConnectionApprovals.removeAll { $0.id == client.id }
             completion(false)
         }
-
-        for request in pendingStreamApprovals where request.client.id == client.id {
-            pendingStreamDecisions[request.id] = false
-        }
-        pendingStreamApprovals.removeAll { $0.client.id == client.id }
         connectedClients.removeAll { $0.id == client.id }
         refreshStatus()
-    }
-
-    func hostService(_ service: MirageHostService, shouldAllowClient client: MirageConnectedClient, toStreamWindow window: MirageWindow) -> Bool {
-        let request = PendingStreamApproval(
-            id: UUID(),
-            client: client,
-            window: window,
-            requestedAt: Date()
-        )
-
-        pendingStreamApprovals.append(request)
-        refreshStatus()
-
-        defer {
-            pendingStreamDecisions.removeValue(forKey: request.id)
-            pendingStreamApprovals.removeAll { $0.id == request.id }
-            refreshStatus()
-        }
-
-        while true {
-            if let decision = pendingStreamDecisions[request.id] {
-                return decision
-            }
-
-            RunLoop.current.run(mode: .default, before: Date(timeIntervalSinceNow: 0.05))
-        }
     }
 
     func hostService(_ service: MirageHostService, didEncounterError error: Error) {
@@ -179,9 +126,8 @@ final class HostController: ObservableObject, MirageHostDelegate {
     // MARK: - Status
 
     private func refreshStatus() {
-        let pendingCount = pendingConnectionApprovals.count + pendingStreamApprovals.count
-        if pendingCount > 0 {
-            status = pendingCount == 1 ? "1 approval pending" : "\(pendingCount) approvals pending"
+        if !pendingConnectionApprovals.isEmpty {
+            status = pendingConnectionApprovals.count == 1 ? "1 approval pending" : "\(pendingConnectionApprovals.count) approvals pending"
             return
         }
 

@@ -1,8 +1,6 @@
 import Foundation
 import MirageKit
 import Combine
-import CoreGraphics
-import CoreVideo
 
 @MainActor
 final class ClientController: ObservableObject {
@@ -18,35 +16,6 @@ final class ClientController: ObservableObject {
     @Published var lastErrorMessage: String?
     @Published var statusMessage: String = "Scanning for hosts..."
 
-    var isConnected: Bool {
-        if case .connected = connectionState {
-            return true
-        }
-        return false
-    }
-
-    var isConnecting: Bool {
-        if case .connecting = connectionState {
-            return true
-        }
-        return false
-    }
-
-    var connectionSummary: String {
-        switch connectionState {
-        case .disconnected:
-            return statusMessage
-        case .connecting:
-            return statusMessage
-        case .connected(let host):
-            return "Connected to \(connectedHost?.name ?? host)"
-        case .reconnecting:
-            return "Reconnecting..."
-        case .error(let message):
-            return "Connection error: \(message)"
-        }
-    }
-    
     init() {
         clientService.delegate = self
         syncClientState()
