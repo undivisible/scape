@@ -140,6 +140,57 @@ final class ScapeTests: XCTestCase {
         XCTAssertTrue(controller.pendingConnectionApprovals.isEmpty)
     }
 
+    func testHostControllerRejectConnectionClearsPendingApprovalWithoutTrustingDevice() {
+        let defaults = makeDefaults(prefix: "host-reject")
+        let trustStore = TrustedDeviceStore(defaults: defaults, key: "trusted.devices")
+        let controller = HostController(
+            hostService: MockHostService(),
+            trustedDeviceStore: trustStore,
+            autoStart: false
+        )
+
+        let deviceID = UUID()
+        let accepted = BoolBox()
+
+        controller.hostService(
+            MirageHostService(),
+            shouldAcceptConnectionFrom: MirageDeviceInfo(id: deviceID, name: "Unknown Mac", deviceType: .mac, endpoint: "reject-endpoint")
+        ) { result in
+            accepted.value = result
+        }
+
+        guard let pending = controller.pendingConnectionApprovals.first else {
+            XCTFail("Expected pending approval")
+            return
+        }
+
+        controller.rejectConnection(pending)
+
+        XCTAssertEqual(accepted.value, false)
+        XCTAssertFalse(trustStore.isTrusted(deviceID: deviceID))
+        XCTAssertTrue(controller.pendingConnectionApprovals.isEmpty)
+    }
+
+    func testHostControllerRevokingTrustedDeviceRemovesPublishedTrust() {
+        let defaults = makeDefaults(prefix: "host-revoke")
+        let trustStore = TrustedDeviceStore(defaults: defaults, key: "trusted.devices")
+        let trustedDeviceID = UUID()
+        trustStore.trust(deviceID: trustedDeviceID)
+
+        let controller = HostController(
+            hostService: MockHostService(),
+            trustedDeviceStore: trustStore,
+            autoStart: false
+        )
+
+        XCTAssertEqual(controller.trustedDeviceIDs, [trustedDeviceID])
+
+        controller.revokeTrustedDevice(trustedDeviceID)
+
+        XCTAssertTrue(controller.trustedDeviceIDs.isEmpty)
+        XCTAssertFalse(trustStore.isTrusted(deviceID: trustedDeviceID))
+    }
+
     func testClientControllerReordersRecentWindowFirst() async throws {
         let defaults = makeDefaults(prefix: "client-history")
         let historyStore = RecentWindowStore(defaults: defaults, key: "recent.windows")
@@ -245,6 +296,116 @@ final class ScapeTests: XCTestCase {
         XCTAssertEqual(mockDiscovery.startCount, 1)
     }
 
+    func testClientControllerStopStreamCallsServiceAndClearsSession() async throws {
+        let mockDiscovery = MockDiscovery()
+        let mockService = MockClientService()
+        let controller = ClientController(
+            clientService: mockService,
+            discovery: mockDiscovery,
+            recentWindowStore: RecentWindowStore(defaults: makeDefaults(prefix: "client-stop"), key: "recent.windows"),
+            autoStartDiscovery: false
+        )
+
+        let host = makeHost(name: "Scape Mac", port: 4444)
+        let app = MirageApplication(id: 7, bundleIdentifier: "com.example.browser", name: "Browser")
+        let window = MirageWindow(id: 1, title: "Alpha", application: app, frame: .zero, isOnScreen: true, windowLayer: 0)
+
+        mockService.availableWindows = [window]
+        try await controller.connect(to: host)
+        controller.clientService(MirageClientService(), didUpdateWindowList: [window])
+        controller.startStream(for: window)
+        await Task.yield()
+
+        guard let session = controller.activeStreams.first else {
+            XCTFail("Expected active stream")
+            return
+        }
+
+        controller.stopStream(session)
+        await Task.yield()
+
+        XCTAssertTrue(controller.activeStreams.isEmpty)
+        XCTAssertEqual(mockService.stopViewingSessions.map(\.id), [session.id])
+        XCTAssertTrue(mockService.activeStreams.isEmpty)
+    }
+
+    func testClientControllerConnectFailureReportsErrorAndRestartsDiscovery() async {
+        let mockDiscovery = MockDiscovery()
+        let mockService = MockClientService()
+        mockService.connectError = MockError.connectFailed
+        let controller = ClientController(
+            clientService: mockService,
+            discovery: mockDiscovery,
+            recentWindowStore: RecentWindowStore(defaults: makeDefaults(prefix: "client-connect-fail"), key: "recent.windows"),
+            autoStartDiscovery: false
+        )
+
+        let host = makeHost(name: "Broken Host", port: 5555)
+
+        do {
+            try await controller.connect(to: host)
+            XCTFail("Expected connect to throw")
+        } catch {
+            XCTAssertEqual(error as? MockError, .connectFailed)
+        }
+
+        XCTAssertNil(controller.connectedHost)
+        XCTAssertEqual(mockDiscovery.startCount, 1)
+        XCTAssertEqual(controller.lastErrorMessage, MockError.connectFailed.localizedDescription)
+        XCTAssertEqual(controller.connectionState, .error(MockError.connectFailed.localizedDescription))
+    }
+
+    func testClientControllerRequestWindowListFailureReportsErrorAndRestartsDiscovery() async {
+        let mockDiscovery = MockDiscovery()
+        let mockService = MockClientService()
+        mockService.requestWindowListError = MockError.requestWindowListFailed
+        let controller = ClientController(
+            clientService: mockService,
+            discovery: mockDiscovery,
+            recentWindowStore: RecentWindowStore(defaults: makeDefaults(prefix: "client-request-fail"), key: "recent.windows"),
+            autoStartDiscovery: false
+        )
+
+        let host = makeHost(name: "Half Broken Host", port: 5556)
+
+        do {
+            try await controller.connect(to: host)
+            XCTFail("Expected connect to throw")
+        } catch {
+            XCTAssertEqual(error as? MockError, .requestWindowListFailed)
+        }
+
+        XCTAssertNil(controller.connectedHost)
+        XCTAssertEqual(mockDiscovery.startCount, 1)
+        XCTAssertEqual(controller.lastErrorMessage, MockError.requestWindowListFailed.localizedDescription)
+        XCTAssertEqual(controller.connectionState, .error(MockError.requestWindowListFailed.localizedDescription))
+    }
+
+    func testClientControllerStartStreamFailureReportsError() async throws {
+        let mockDiscovery = MockDiscovery()
+        let mockService = MockClientService()
+        mockService.startViewingError = MockError.startViewingFailed
+        let controller = ClientController(
+            clientService: mockService,
+            discovery: mockDiscovery,
+            recentWindowStore: RecentWindowStore(defaults: makeDefaults(prefix: "client-stream-fail"), key: "recent.windows"),
+            autoStartDiscovery: false
+        )
+
+        let host = makeHost(name: "Streaming Host", port: 5557)
+        let app = MirageApplication(id: 7, bundleIdentifier: "com.example.browser", name: "Browser")
+        let window = MirageWindow(id: 1, title: "Alpha", application: app, frame: .zero, isOnScreen: true, windowLayer: 0)
+
+        try await controller.connect(to: host)
+        controller.clientService(MirageClientService(), didUpdateWindowList: [window])
+        controller.startStream(for: window)
+        await Task.yield()
+
+        XCTAssertTrue(mockService.activeStreams.isEmpty)
+        XCTAssertEqual(controller.lastErrorMessage, MockError.startViewingFailed.localizedDescription)
+        XCTAssertEqual(controller.connectionState, .error(MockError.startViewingFailed.localizedDescription))
+    }
+
     private func waitUntil(_ condition: @escaping () -> Bool, maxIterations: Int = 50) async {
         for _ in 0..<maxIterations {
             if condition() {
@@ -303,6 +464,9 @@ final class MockClientService: ClientServiceManaging {
     var connectionState: MirageClientService.ConnectionState = .disconnected
     var availableWindows: [MirageWindow] = []
     var activeStreams: [ClientStreamSession] = []
+    var connectError: Error?
+    var requestWindowListError: Error?
+    var startViewingError: Error?
 
     private(set) var connectCalls: [MirageHost] = []
     private(set) var disconnectCount = 0
@@ -311,6 +475,10 @@ final class MockClientService: ClientServiceManaging {
 
     func connect(to host: MirageHost) async throws {
         connectCalls.append(host)
+        if let connectError {
+            connectionState = .error(connectError.localizedDescription)
+            throw connectError
+        }
         connectionState = .connected(host: host.name)
     }
 
@@ -322,6 +490,9 @@ final class MockClientService: ClientServiceManaging {
 
     func requestWindowList() async throws {
         requestWindowListCount += 1
+        if let requestWindowListError {
+            throw requestWindowListError
+        }
     }
 
     func startViewing(
@@ -334,6 +505,9 @@ final class MockClientService: ClientServiceManaging {
         keyFrameInterval: Int?,
         keyframeQuality: Float?
     ) async throws -> ClientStreamSession {
+        if let startViewingError {
+            throw startViewingError
+        }
         let session = ClientStreamSession(id: StreamID(truncatingIfNeeded: window.id), window: window, quality: quality)
         activeStreams.append(session)
         return session
@@ -357,4 +531,21 @@ final class MockHostService: HostServiceManaging {
 
 final class BoolBox: @unchecked Sendable {
     var value: Bool?
+}
+
+enum MockError: LocalizedError, Equatable {
+    case connectFailed
+    case requestWindowListFailed
+    case startViewingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .connectFailed:
+            return "connect failed"
+        case .requestWindowListFailed:
+            return "request window list failed"
+        case .startViewingFailed:
+            return "start viewing failed"
+        }
+    }
 }
