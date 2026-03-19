@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/undivisible/miragekit.git",
       "state" : {
-        "branch" : "visionos-fixes",
-        "revision" : "0bdbe59d5d49073432958de531a3035092a6b70d"
+        "branch" : "main",
+        "revision" : "0758ce984f585ee3c5e688b0447585da78316d45"
       }
     }
   ],

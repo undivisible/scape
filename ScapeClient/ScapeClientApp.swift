@@ -6,7 +6,7 @@ struct ScapeClientApp: App {
     @StateObject private var controller = ClientController()
     
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "host_picker") {
             HostPickerView(controller: controller)
         }
         .windowStyle(.plain)

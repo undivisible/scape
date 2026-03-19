@@ -406,7 +406,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/undivisible/miragekit.git";
 			requirement = {
-				branch = "visionos-fixes";
+				branch = "main";
 				kind = branch;
 			};
 		};

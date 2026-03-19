@@ -1,30 +1,62 @@
 import Foundation
 import MirageKit
 import Combine
+import CoreGraphics
+import CoreVideo
 
 @MainActor
 final class ClientController: ObservableObject {
     let clientService = MirageClientService()
     private let discovery = MirageDiscovery()
+    private var discoveryTimer: Timer?
     
     @Published var availableHosts: [MirageHost] = []
     @Published var connectedHost: MirageHost?
-    
-    var availableWindows: [MirageWindow] {
-        clientService.availableWindows
+    @Published var availableWindows: [MirageWindow] = []
+    @Published var activeStreams: [ClientStreamSession] = []
+    @Published var connectionState: MirageClientService.ConnectionState = .disconnected
+    @Published var lastErrorMessage: String?
+    @Published var statusMessage: String = "Scanning for hosts..."
+
+    var isConnected: Bool {
+        if case .connected = connectionState {
+            return true
+        }
+        return false
     }
-    
-    var activeStreams: [ClientStreamSession] {
-        clientService.activeStreams
+
+    var isConnecting: Bool {
+        if case .connecting = connectionState {
+            return true
+        }
+        return false
+    }
+
+    var connectionSummary: String {
+        switch connectionState {
+        case .disconnected:
+            return statusMessage
+        case .connecting:
+            return statusMessage
+        case .connected(let host):
+            return "Connected to \(connectedHost?.name ?? host)"
+        case .reconnecting:
+            return "Reconnecting..."
+        case .error(let message):
+            return "Connection error: \(message)"
+        }
     }
     
     init() {
+        clientService.delegate = self
+        syncClientState()
         setupDiscovery()
     }
     
     private func setupDiscovery() {
         // Poll for host updates since MirageDiscovery is @Observable
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        discoveryTimer?.invalidate()
+        discoveryTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.availableHosts = self?.discovery.discoveredHosts ?? []
             }
@@ -33,10 +65,35 @@ final class ClientController: ObservableObject {
     }
     
     func connect(to host: MirageHost) async throws {
+        lastErrorMessage = nil
+        statusMessage = "Connecting to \(host.name)..."
         discovery.stopDiscovery()
-        try await clientService.connect(to: host)
-        connectedHost = host
-        try await clientService.requestWindowList()
+        connectionState = .connecting
+        do {
+            try await clientService.connect(to: host)
+            connectedHost = host
+            syncClientState()
+            statusMessage = "Connected to \(host.name). Loading windows..."
+            try await clientService.requestWindowList()
+        } catch {
+            connectedHost = nil
+            await clientService.disconnect()
+            syncClientState()
+            connectionState = .error(error.localizedDescription)
+            lastErrorMessage = error.localizedDescription
+            statusMessage = "Failed to connect to \(host.name)"
+            discovery.startDiscovery()
+            throw error
+        }
+    }
+
+    func disconnect() async {
+        await clientService.disconnect()
+        connectedHost = nil
+        lastErrorMessage = nil
+        syncClientState()
+        statusMessage = "Scanning for hosts..."
+        discovery.startDiscovery()
     }
     
     func startStream(for window: MirageWindow) {
@@ -46,7 +103,12 @@ final class ClientController: ObservableObject {
                     window: window,
                     quality: .high
                 )
+                syncClientState()
+                statusMessage = "Streaming \(window.displayName)"
             } catch {
+                lastErrorMessage = error.localizedDescription
+                connectionState = .error(error.localizedDescription)
+                statusMessage = "Failed to start stream"
                 print("Failed to start stream: \(error)")
             }
         }
@@ -55,6 +117,47 @@ final class ClientController: ObservableObject {
     func stopStream(_ session: ClientStreamSession) {
         Task {
             await clientService.stopViewing(session)
+            syncClientState()
+            if let connectedHost {
+                statusMessage = activeStreams.isEmpty ? "Connected to \(connectedHost.name)" : "Streaming \(activeStreams.count) window(s)"
+            }
         }
+    }
+
+    private func syncClientState() {
+        connectionState = clientService.connectionState
+        availableWindows = clientService.availableWindows
+        activeStreams = clientService.activeStreams
+    }
+}
+
+extension ClientController: MirageClientDelegate {
+    func clientService(_ service: MirageClientService, didUpdateWindowList windows: [MirageWindow]) {
+        availableWindows = windows
+        syncClientState()
+        if let connectedHost {
+            statusMessage = windows.isEmpty ? "Connected to \(connectedHost.name). Waiting for windows..." : "\(windows.count) window(s) available"
+        }
+    }
+
+    func clientService(_ service: MirageClientService, didDisconnectFromHost reason: String) {
+        connectedHost = nil
+        lastErrorMessage = reason == "userRequested" ? nil : reason
+        syncClientState()
+        statusMessage = reason == "userRequested" ? "Scanning for hosts..." : "Disconnected: \(reason)"
+        discovery.startDiscovery()
+    }
+
+    func clientService(_ service: MirageClientService, didEncounterError error: Error) {
+        lastErrorMessage = error.localizedDescription
+        syncClientState()
+        statusMessage = "Connection error"
+    }
+
+    func clientService(_ service: MirageClientService, unlockDidComplete success: Bool, error: String?, canRetry: Bool, retriesRemaining: Int?, retryAfterSeconds: Int?) {
+        if !success {
+            lastErrorMessage = error
+        }
+        syncClientState()
     }
 }

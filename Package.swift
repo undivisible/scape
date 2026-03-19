@@ -15,7 +15,7 @@ let package = Package(
         .executable(name: "ScapeClient", targets: ["ScapeClient"])
     ],
     dependencies: [
-        .package(url: "https://github.com/undivisible/miragekit.git", branch: "visionos-fixes")
+        .package(url: "https://github.com/undivisible/miragekit.git", branch: "main")
     ],
     targets: [
         .executableTarget(
@@ -24,9 +24,7 @@ let package = Package(
                 .product(name: "MirageKit", package: "MirageKit")
             ],
             path: "ScapeHost",
-            resources: [
-                .process("Resources")
-            ]
+            exclude: ["Info.plist"]
         ),
         .executableTarget(
             name: "ScapeClient",
@@ -34,9 +32,7 @@ let package = Package(
                 .product(name: "MirageKit", package: "MirageKit")
             ],
             path: "ScapeClient",
-            resources: [
-                .process("Resources")
-            ]
+            exclude: ["Info.plist"]
         )
     ]
 )

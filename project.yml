@@ -26,4 +26,4 @@ targets:
 packages:
   MirageKit:
     url: https://github.com/undivisible/miragekit.git
-    branch: visionos-fixes
+    branch: main
