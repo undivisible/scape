@@ -9,7 +9,8 @@ final class HostController: ObservableObject, MirageHostDelegate {
         let requestedAt: Date
     }
 
-    private let hostService = MirageHostService()
+    private let hostService: any HostServiceManaging
+    private let trustedDeviceStore: TrustedDeviceStore
 
     @Published var status: String = "Initializing..."
     @Published var connectedClients: [MirageConnectedClient] = []
@@ -18,12 +19,20 @@ final class HostController: ObservableObject, MirageHostDelegate {
     private var serviceStatus: String = "Initializing..."
     private var pendingConnectionHandlers: [UUID: @Sendable (Bool) -> Void] = [:]
 
-    init() {
+    init(
+        hostService: any HostServiceManaging = MirageHostService(),
+        trustedDeviceStore: TrustedDeviceStore = TrustedDeviceStore(),
+        autoStart: Bool = true
+    ) {
+        self.hostService = hostService
+        self.trustedDeviceStore = trustedDeviceStore
         hostService.delegate = self
         refreshStatus()
 
-        Task {
-            try? await self.start()
+        if autoStart {
+            Task {
+                try? await self.start()
+            }
         }
     }
 
@@ -47,6 +56,7 @@ final class HostController: ObservableObject, MirageHostDelegate {
             return
         }
 
+        trustedDeviceStore.trust(deviceID: request.deviceInfo.id)
         pendingConnectionApprovals.removeAll { $0.id == request.id }
         completion(true)
         refreshStatus()
@@ -69,6 +79,11 @@ final class HostController: ObservableObject, MirageHostDelegate {
         shouldAcceptConnectionFrom deviceInfo: MirageDeviceInfo,
         completion: @escaping @Sendable (Bool) -> Void
     ) {
+        if trustedDeviceStore.isTrusted(deviceID: deviceInfo.id) {
+            completion(true)
+            return
+        }
+
         let request = PendingConnectionApproval(
             id: deviceInfo.id,
             deviceInfo: deviceInfo,

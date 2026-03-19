@@ -4,9 +4,11 @@ import Combine
 
 @MainActor
 final class ClientController: ObservableObject {
-    let clientService = MirageClientService()
-    private let discovery = MirageDiscovery()
+    let clientService: any ClientServiceManaging
+    private let discovery: any DiscoveryManaging
+    private let recentWindowStore: RecentWindowStore
     private var discoveryTimer: Timer?
+    private var currentHostHistoryKey: String?
     
     @Published var availableHosts: [MirageHost] = []
     @Published var connectedHost: MirageHost?
@@ -16,10 +18,20 @@ final class ClientController: ObservableObject {
     @Published var lastErrorMessage: String?
     @Published var statusMessage: String = "Scanning for hosts..."
 
-    init() {
+    init(
+        clientService: any ClientServiceManaging = MirageClientService(),
+        discovery: any DiscoveryManaging = MirageDiscovery(),
+        recentWindowStore: RecentWindowStore = RecentWindowStore(),
+        autoStartDiscovery: Bool = true
+    ) {
+        self.clientService = clientService
+        self.discovery = discovery
+        self.recentWindowStore = recentWindowStore
         clientService.delegate = self
         syncClientState()
-        setupDiscovery()
+        if autoStartDiscovery {
+            setupDiscovery()
+        }
     }
     
     private func setupDiscovery() {
@@ -27,9 +39,10 @@ final class ClientController: ObservableObject {
         discoveryTimer?.invalidate()
         discoveryTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.availableHosts = self?.discovery.discoveredHosts ?? []
+                self?.refreshDiscoveryHosts()
             }
         }
+        refreshDiscoveryHosts()
         discovery.startDiscovery()
     }
     
@@ -41,11 +54,13 @@ final class ClientController: ObservableObject {
         do {
             try await clientService.connect(to: host)
             connectedHost = host
+            currentHostHistoryKey = hostHistoryKey(for: host)
             syncClientState()
             statusMessage = "Connected to \(host.name). Loading windows..."
             try await clientService.requestWindowList()
         } catch {
             connectedHost = nil
+            currentHostHistoryKey = nil
             await clientService.disconnect()
             syncClientState()
             connectionState = .error(error.localizedDescription)
@@ -59,6 +74,7 @@ final class ClientController: ObservableObject {
     func disconnect() async {
         await clientService.disconnect()
         connectedHost = nil
+        currentHostHistoryKey = nil
         lastErrorMessage = nil
         syncClientState()
         statusMessage = "Scanning for hosts..."
@@ -66,12 +82,22 @@ final class ClientController: ObservableObject {
     }
     
     func startStream(for window: MirageWindow) {
-        Task {
+        Task { @MainActor in
             do {
                 _ = try await clientService.startViewing(
                     window: window,
-                    quality: .high
+                    quality: .high,
+                    expectedPixelSize: nil,
+                    scaleFactor: nil,
+                    displayResolution: nil,
+                    maxBitrate: nil,
+                    keyFrameInterval: nil,
+                    keyframeQuality: nil
                 )
+                if let currentHostHistoryKey {
+                    recentWindowStore.remember(windowID: window.id, for: currentHostHistoryKey)
+                    availableWindows = recentWindowStore.orderedWindows(availableWindows, for: currentHostHistoryKey)
+                }
                 syncClientState()
                 statusMessage = "Streaming \(window.displayName)"
             } catch {
@@ -84,8 +110,8 @@ final class ClientController: ObservableObject {
     }
     
     func stopStream(_ session: ClientStreamSession) {
-        Task {
-            await clientService.stopViewing(session)
+        Task { @MainActor in
+            await clientService.stopViewing(session, minimizeWindow: false)
             syncClientState()
             if let connectedHost {
                 statusMessage = activeStreams.isEmpty ? "Connected to \(connectedHost.name)" : "Streaming \(activeStreams.count) window(s)"
@@ -95,8 +121,20 @@ final class ClientController: ObservableObject {
 
     private func syncClientState() {
         connectionState = clientService.connectionState
-        availableWindows = clientService.availableWindows
+        if let currentHostHistoryKey {
+            availableWindows = recentWindowStore.orderedWindows(clientService.availableWindows, for: currentHostHistoryKey)
+        } else {
+            availableWindows = clientService.availableWindows
+        }
         activeStreams = clientService.activeStreams
+    }
+
+    private func refreshDiscoveryHosts() {
+        availableHosts = discovery.discoveredHosts.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    private func hostHistoryKey(for host: MirageHost) -> String {
+        host.endpoint.debugDescription
     }
 }
 

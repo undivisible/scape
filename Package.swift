@@ -33,6 +33,14 @@ let package = Package(
             ],
             path: "ScapeClient",
             exclude: ["Info.plist"]
+        ),
+        .testTarget(
+            name: "ScapeTests",
+            dependencies: [
+                "ScapeClient",
+                "ScapeHost"
+            ],
+            path: "Tests/ScapeTests"
         )
     ]
 )
