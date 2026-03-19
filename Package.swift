@@ -38,7 +38,8 @@ let package = Package(
             name: "ScapeTests",
             dependencies: [
                 "ScapeClient",
-                "ScapeHost"
+                "ScapeHost",
+                .product(name: "MirageKit", package: "MirageKit")
             ],
             path: "Tests/ScapeTests"
         )

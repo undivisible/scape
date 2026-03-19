@@ -1,5 +1,6 @@
 import Foundation
 import CoreGraphics
+import Observation
 import MirageKit
 
 @MainActor
@@ -30,10 +31,40 @@ protocol DiscoveryManaging: AnyObject {
     var discoveredHosts: [MirageHost] { get }
     func startDiscovery()
     func stopDiscovery()
+    func observeDiscoveredHosts(_ onChange: @escaping @MainActor () -> Void)
 }
 
 extension MirageClientService: ClientServiceManaging {}
-extension MirageDiscovery: DiscoveryManaging {}
+
+extension MirageDiscovery: DiscoveryManaging {
+    func observeDiscoveredHosts(_ onChange: @escaping @MainActor () -> Void) {
+        withObservationTracking {
+            _ = discoveredHosts
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                onChange()
+                self?.observeDiscoveredHosts(onChange)
+            }
+        }
+    }
+}
+
+final class ClientSessionStore {
+    private let defaults: UserDefaults
+    private let lastHostKeyKey: String
+
+    init(defaults: UserDefaults = .standard, lastHostKeyKey: String = "com.scape.lastHostHistoryKey") {
+        self.defaults = defaults
+        self.lastHostKeyKey = lastHostKeyKey
+    }
+
+    var lastHostHistoryKey: String? {
+        get { defaults.string(forKey: lastHostKeyKey) }
+        set {
+            defaults.set(newValue, forKey: lastHostKeyKey)
+        }
+    }
+}
 
 struct RecentWindowStore {
     private let defaults: UserDefaults

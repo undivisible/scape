@@ -17,6 +17,8 @@ struct HostDashboardView: View {
                         approvalsSection
                     }
 
+                    trustedDevicesSection
+
                     clientsSection
                 }
                 .padding(.horizontal, 16)
@@ -73,6 +75,54 @@ struct HostDashboardView: View {
                 }
             }
 
+        }
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var trustedDevicesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Trusted Devices")
+                .font(.headline)
+
+            if controller.trustedDeviceIDs.isEmpty {
+                ContentUnavailableView {
+                    Label("No Trusted Devices", systemImage: "checkmark.shield")
+                } description: {
+                    Text("Approved devices will appear here.")
+                }
+            } else {
+                LazyVStack(spacing: 10) {
+                    ForEach(controller.trustedDeviceIDs, id: \.self) { deviceID in
+                        HStack(alignment: .center, spacing: 12) {
+                            Image(systemName: "checkmark.shield.fill")
+                                .foregroundStyle(.green)
+                                .frame(width: 28)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(deviceID.uuidString)
+                                    .font(.caption)
+                                    .monospaced()
+                                    .textSelection(.enabled)
+                                Text("Trusted device")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Button("Revoke") {
+                                controller.revokeTrustedDevice(deviceID)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+            }
         }
         .padding(16)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))

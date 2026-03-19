@@ -1,14 +1,16 @@
 import Foundation
-import MirageKit
 import Combine
+import MirageKit
 
 @MainActor
 final class ClientController: ObservableObject {
     let clientService: any ClientServiceManaging
     private let discovery: any DiscoveryManaging
     private let recentWindowStore: RecentWindowStore
-    private var discoveryTimer: Timer?
+    private let sessionStore: ClientSessionStore
     private var currentHostHistoryKey: String?
+    private var pendingResumeWindowID: WindowID?
+    private var didAttemptAutoResume = false
     
     @Published var availableHosts: [MirageHost] = []
     @Published var connectedHost: MirageHost?
@@ -22,11 +24,13 @@ final class ClientController: ObservableObject {
         clientService: any ClientServiceManaging = MirageClientService(),
         discovery: any DiscoveryManaging = MirageDiscovery(),
         recentWindowStore: RecentWindowStore = RecentWindowStore(),
+        sessionStore: ClientSessionStore = ClientSessionStore(),
         autoStartDiscovery: Bool = true
     ) {
         self.clientService = clientService
         self.discovery = discovery
         self.recentWindowStore = recentWindowStore
+        self.sessionStore = sessionStore
         clientService.delegate = self
         syncClientState()
         if autoStartDiscovery {
@@ -35,15 +39,13 @@ final class ClientController: ObservableObject {
     }
     
     private func setupDiscovery() {
-        // Poll for host updates since MirageDiscovery is @Observable
-        discoveryTimer?.invalidate()
-        discoveryTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.refreshDiscoveryHosts()
-            }
-        }
         refreshDiscoveryHosts()
+        discovery.observeDiscoveredHosts { [weak self] in
+            self?.refreshDiscoveryHosts()
+            self?.attemptAutoResumeIfNeeded()
+        }
         discovery.startDiscovery()
+        attemptAutoResumeIfNeeded()
     }
     
     func connect(to host: MirageHost) async throws {
@@ -54,13 +56,19 @@ final class ClientController: ObservableObject {
         do {
             try await clientService.connect(to: host)
             connectedHost = host
-            currentHostHistoryKey = hostHistoryKey(for: host)
+            let hostHistoryKey = hostHistoryKey(for: host)
+            currentHostHistoryKey = hostHistoryKey
+            sessionStore.lastHostHistoryKey = currentHostHistoryKey
+            pendingResumeWindowID = recentWindowStore.recentWindowID(for: hostHistoryKey)
+            didAttemptAutoResume = true
             syncClientState()
             statusMessage = "Connected to \(host.name). Loading windows..."
             try await clientService.requestWindowList()
         } catch {
             connectedHost = nil
             currentHostHistoryKey = nil
+            pendingResumeWindowID = nil
+            didAttemptAutoResume = true
             await clientService.disconnect()
             syncClientState()
             connectionState = .error(error.localizedDescription)
@@ -75,6 +83,8 @@ final class ClientController: ObservableObject {
         await clientService.disconnect()
         connectedHost = nil
         currentHostHistoryKey = nil
+        pendingResumeWindowID = nil
+        didAttemptAutoResume = true
         lastErrorMessage = nil
         syncClientState()
         statusMessage = "Scanning for hosts..."
@@ -82,6 +92,7 @@ final class ClientController: ObservableObject {
     }
     
     func startStream(for window: MirageWindow) {
+        pendingResumeWindowID = nil
         Task { @MainActor in
             do {
                 _ = try await clientService.startViewing(
@@ -131,6 +142,49 @@ final class ClientController: ObservableObject {
 
     private func refreshDiscoveryHosts() {
         availableHosts = discovery.discoveredHosts.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        attemptAutoResumeIfNeeded()
+    }
+
+    private func attemptAutoResumeIfNeeded() {
+        guard !didAttemptAutoResume else {
+            return
+        }
+        guard case .disconnected = connectionState, connectedHost == nil, currentHostHistoryKey == nil else {
+            return
+        }
+        guard let rememberedHostKey = sessionStore.lastHostHistoryKey else {
+            return
+        }
+        guard let host = availableHosts.first(where: { hostHistoryKey(for: $0) == rememberedHostKey }) else {
+            return
+        }
+
+        didAttemptAutoResume = true
+        statusMessage = "Resuming connection to \(host.name)..."
+        pendingResumeWindowID = recentWindowStore.recentWindowID(for: rememberedHostKey)
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            do {
+                try await self.connect(to: host)
+            } catch {
+                // connect(_:) already updates error state and restarts discovery
+            }
+        }
+    }
+
+    private func attemptPendingResumeIfPossible() {
+        guard case .connected = connectionState,
+              connectedHost != nil,
+              activeStreams.isEmpty,
+              let pendingResumeWindowID,
+              let window = availableWindows.first(where: { $0.id == pendingResumeWindowID }) else {
+            return
+        }
+
+        self.pendingResumeWindowID = nil
+        startStream(for: window)
     }
 
     private func hostHistoryKey(for host: MirageHost) -> String {
@@ -145,10 +199,14 @@ extension ClientController: MirageClientDelegate {
         if let connectedHost {
             statusMessage = windows.isEmpty ? "Connected to \(connectedHost.name). Waiting for windows..." : "\(windows.count) window(s) available"
         }
+        attemptPendingResumeIfPossible()
     }
 
     func clientService(_ service: MirageClientService, didDisconnectFromHost reason: String) {
         connectedHost = nil
+        currentHostHistoryKey = nil
+        pendingResumeWindowID = nil
+        didAttemptAutoResume = true
         lastErrorMessage = reason == "userRequested" ? nil : reason
         syncClientState()
         statusMessage = reason == "userRequested" ? "Scanning for hosts..." : "Disconnected: \(reason)"

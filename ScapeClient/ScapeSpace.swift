@@ -48,17 +48,13 @@ struct ScapeSpace: View {
                 }
             }
 
-                Button {
-                    Task {
-                        await controller.disconnect()
-                        #if os(visionOS)
-                        await dismissImmersiveSpace()
-                        openWindow(id: "host_picker")
-                        #endif
-                    }
-                } label: {
-                    Label("Disconnect", systemImage: "arrow.backward.circle")
+            Button {
+                Task {
+                    await disconnectAndReturnToPicker()
                 }
+            } label: {
+                Label("Disconnect", systemImage: "arrow.backward.circle")
+            }
             .buttonStyle(.bordered)
         }
         .frame(maxWidth: .infinity)
@@ -166,6 +162,14 @@ struct ScapeSpace: View {
         }
         .padding(20)
         .visionGlassBackground()
+    }
+
+    private func disconnectAndReturnToPicker() async {
+        await controller.disconnect()
+        #if os(visionOS)
+        await dismissImmersiveSpace()
+        openWindow(id: "host_picker")
+        #endif
     }
 
     private var connectionStatusLabel: String {

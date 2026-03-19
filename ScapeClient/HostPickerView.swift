@@ -3,8 +3,10 @@ import MirageKit
 
 struct HostPickerView: View {
     @ObservedObject var controller: ClientController
+    #if os(visionOS)
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.dismissWindow) private var dismissWindow
+    #endif
     
     var body: some View {
         NavigationStack {
@@ -31,6 +33,15 @@ struct HostPickerView: View {
             .background(.regularMaterial)
             .cornerRadius(40)
         }
+        #if os(visionOS)
+        .task(id: controller.connectedHost?.id) {
+            guard controller.connectedHost != nil else {
+                return
+            }
+
+            await openConnectedImmersiveSpace()
+        }
+        #endif
     }
     
     private var header: some View {
@@ -275,15 +286,18 @@ struct HostPickerView: View {
         Task {
             do {
                 try await controller.connect(to: host)
-                #if os(visionOS)
-                await openImmersiveSpace(id: "scape_space")
-                dismissWindow()
-                #endif
             } catch {
                 print("Failed to connect: \(error)")
             }
         }
     }
+
+    #if os(visionOS)
+    private func openConnectedImmersiveSpace() async {
+        await openImmersiveSpace(id: "scape_space")
+        dismissWindow()
+    }
+    #endif
 }
 
 #Preview {

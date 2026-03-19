@@ -15,6 +15,7 @@ final class HostController: ObservableObject, MirageHostDelegate {
     @Published var status: String = "Initializing..."
     @Published var connectedClients: [MirageConnectedClient] = []
     @Published var pendingConnectionApprovals: [PendingConnectionApproval] = []
+    @Published var trustedDeviceIDs: [UUID] = []
 
     private var serviceStatus: String = "Initializing..."
     private var pendingConnectionHandlers: [UUID: @Sendable (Bool) -> Void] = [:]
@@ -27,6 +28,7 @@ final class HostController: ObservableObject, MirageHostDelegate {
         self.hostService = hostService
         self.trustedDeviceStore = trustedDeviceStore
         hostService.delegate = self
+        refreshTrustedDeviceIDs()
         refreshStatus()
 
         if autoStart {
@@ -57,9 +59,15 @@ final class HostController: ObservableObject, MirageHostDelegate {
         }
 
         trustedDeviceStore.trust(deviceID: request.deviceInfo.id)
+        refreshTrustedDeviceIDs()
         pendingConnectionApprovals.removeAll { $0.id == request.id }
         completion(true)
         refreshStatus()
+    }
+
+    func revokeTrustedDevice(_ deviceID: UUID) {
+        trustedDeviceStore.revoke(deviceID: deviceID)
+        refreshTrustedDeviceIDs()
     }
 
     func rejectConnection(_ request: PendingConnectionApproval) {
@@ -139,6 +147,10 @@ final class HostController: ObservableObject, MirageHostDelegate {
     }
 
     // MARK: - Status
+
+    private func refreshTrustedDeviceIDs() {
+        trustedDeviceIDs = trustedDeviceStore.trustedDeviceIDs()
+    }
 
     private func refreshStatus() {
         if !pendingConnectionApprovals.isEmpty {

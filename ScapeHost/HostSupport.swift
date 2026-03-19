@@ -34,6 +34,10 @@ final class TrustedDeviceStore {
         defaults.set(trusted.map(\.uuidString), forKey: key)
     }
 
+    func trustedDeviceIDs() -> [UUID] {
+        loadTrustedDeviceIDs()
+    }
+
     private func loadTrustedDeviceIDs() -> [UUID] {
         (defaults.stringArray(forKey: key) ?? []).compactMap(UUID.init(uuidString:))
     }

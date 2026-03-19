@@ -19,6 +19,24 @@ final class ScapeTests: XCTestCase {
         XCTAssertFalse(store.isTrusted(deviceID: deviceID))
     }
 
+    func testTrustedDeviceStoreRevokesOnlyTargetDevice() {
+        let defaults = makeDefaults(prefix: "trusted-revoke")
+        let store = TrustedDeviceStore(defaults: defaults, key: "trusted.devices")
+        let trustedDeviceID = UUID()
+        let revokedDeviceID = UUID()
+
+        store.trust(deviceID: trustedDeviceID)
+        store.trust(deviceID: revokedDeviceID)
+
+        XCTAssertTrue(store.isTrusted(deviceID: trustedDeviceID))
+        XCTAssertTrue(store.isTrusted(deviceID: revokedDeviceID))
+
+        store.revoke(deviceID: revokedDeviceID)
+
+        XCTAssertTrue(store.isTrusted(deviceID: trustedDeviceID))
+        XCTAssertFalse(store.isTrusted(deviceID: revokedDeviceID))
+    }
+
     func testRecentWindowStorePrioritizesMostRecentWindow() {
         let defaults = makeDefaults(prefix: "recent")
         let store = RecentWindowStore(defaults: defaults, key: "recent.windows")
@@ -32,6 +50,36 @@ final class ScapeTests: XCTestCase {
 
         let ordered = store.orderedWindows([windowA, windowB], for: hostKey)
         XCTAssertEqual(ordered.map { $0.id }, [windowB.id, windowA.id])
+    }
+
+    func testRecentWindowStoreKeepsHistoryPerHost() {
+        let defaults = makeDefaults(prefix: "recent-per-host")
+        let store = RecentWindowStore(defaults: defaults, key: "recent.windows")
+        let hostA = "host-a"
+        let hostB = "host-b"
+
+        let app = MirageApplication(id: 42, bundleIdentifier: "com.example.app", name: "Example")
+        let windowA = MirageWindow(id: 10, title: "Alpha", application: app, frame: .zero, isOnScreen: true, windowLayer: 0)
+        let windowB = MirageWindow(id: 20, title: "Beta", application: app, frame: .zero, isOnScreen: true, windowLayer: 0)
+
+        store.remember(windowID: windowA.id, for: hostA)
+        store.remember(windowID: windowB.id, for: hostB)
+
+        XCTAssertEqual(store.recentWindowID(for: hostA), windowA.id)
+        XCTAssertEqual(store.recentWindowID(for: hostB), windowB.id)
+        XCTAssertEqual(store.orderedWindows([windowA, windowB], for: hostA).map { $0.id }, [windowA.id, windowB.id])
+        XCTAssertEqual(store.orderedWindows([windowA, windowB], for: hostB).map { $0.id }, [windowB.id, windowA.id])
+    }
+
+    func testClientSessionStorePersistsLastHostHistoryKey() {
+        let defaults = makeDefaults(prefix: "session-host")
+        let store = ClientSessionStore(defaults: defaults, lastHostKeyKey: "session.host")
+        let hostKey = "host-history-key"
+
+        store.lastHostHistoryKey = hostKey
+
+        let reloadedStore = ClientSessionStore(defaults: defaults, lastHostKeyKey: "session.host")
+        XCTAssertEqual(reloadedStore.lastHostHistoryKey, hostKey)
     }
 
     func testHostControllerAutoAcceptsTrustedDevice() async {
@@ -117,6 +165,66 @@ final class ScapeTests: XCTestCase {
         XCTAssertEqual(controller.availableWindows.map(\.id), [windowB.id, windowA.id])
     }
 
+    func testClientControllerRestoresLastWindowForSameHostAfterReconnect() async throws {
+        let defaults = makeDefaults(prefix: "client-session-resume")
+        let historyStore = RecentWindowStore(defaults: defaults, key: "recent.windows")
+        let mockDiscovery = MockDiscovery()
+        let mockService = MockClientService()
+        let controller = ClientController(
+            clientService: mockService,
+            discovery: mockDiscovery,
+            recentWindowStore: historyStore,
+            autoStartDiscovery: false
+        )
+
+        let host = makeHost(name: "Scape Mac", port: 3333)
+        let app = MirageApplication(id: 7, bundleIdentifier: "com.example.browser", name: "Browser")
+        let windowA = MirageWindow(id: 1, title: "Alpha", application: app, frame: .zero, isOnScreen: true, windowLayer: 0)
+        let windowB = MirageWindow(id: 2, title: "Beta", application: app, frame: .zero, isOnScreen: true, windowLayer: 0)
+
+        mockService.availableWindows = [windowA, windowB]
+        try await controller.connect(to: host)
+        controller.clientService(MirageClientService(), didUpdateWindowList: [windowA, windowB])
+        controller.startStream(for: windowB)
+        await Task.yield()
+        XCTAssertEqual(controller.availableWindows.map(\.id), [windowB.id, windowA.id])
+
+        await controller.disconnect()
+        mockService.availableWindows = [windowA, windowB]
+
+        try await controller.connect(to: host)
+        controller.clientService(MirageClientService(), didUpdateWindowList: [windowA, windowB])
+
+        XCTAssertEqual(controller.availableWindows.map(\.id), [windowB.id, windowA.id])
+    }
+
+    func testClientControllerAutoResumesRememberedHostWhenDiscovered() async throws {
+        let defaults = makeDefaults(prefix: "client-auto-resume")
+        let historyStore = RecentWindowStore(defaults: defaults, key: "recent.windows")
+        let sessionStore = ClientSessionStore(defaults: defaults, lastHostKeyKey: "session.host")
+        let mockDiscovery = MockDiscovery()
+        let mockService = MockClientService()
+        let controller = ClientController(
+            clientService: mockService,
+            discovery: mockDiscovery,
+            recentWindowStore: historyStore,
+            sessionStore: sessionStore,
+            autoStartDiscovery: true
+        )
+
+        let host = makeHost(name: "Scape Mac", port: 3334)
+        sessionStore.lastHostHistoryKey = host.endpoint.debugDescription
+        mockDiscovery.discoveredHosts = [host]
+
+        await waitUntil {
+            controller.connectedHost?.endpoint.debugDescription == host.endpoint.debugDescription
+        }
+
+        XCTAssertEqual(mockService.connectCalls.count, 1)
+        XCTAssertEqual(mockDiscovery.startCount, 1)
+        XCTAssertEqual(sessionStore.lastHostHistoryKey, host.endpoint.debugDescription)
+    }
+
     func testClientControllerDisconnectRestartsDiscovery() async throws {
         let mockDiscovery = MockDiscovery()
         let mockService = MockClientService()
@@ -135,6 +243,16 @@ final class ScapeTests: XCTestCase {
 
         XCTAssertNil(controller.connectedHost)
         XCTAssertEqual(mockDiscovery.startCount, 1)
+    }
+
+    private func waitUntil(_ condition: @escaping () -> Bool, maxIterations: Int = 50) async {
+        for _ in 0..<maxIterations {
+            if condition() {
+                return
+            }
+            await Task.yield()
+        }
+        XCTFail("Timed out waiting for condition")
     }
 
     private func makeDefaults(prefix: String) -> UserDefaults {
@@ -157,9 +275,14 @@ final class ScapeTests: XCTestCase {
 
 @MainActor
 final class MockDiscovery: DiscoveryManaging {
-    var discoveredHosts: [MirageHost] = []
+    var discoveredHosts: [MirageHost] = [] {
+        didSet {
+            onChange?()
+        }
+    }
     private(set) var startCount = 0
     private(set) var stopCount = 0
+    private var onChange: (@MainActor () -> Void)?
 
     func startDiscovery() {
         startCount += 1
@@ -167,6 +290,10 @@ final class MockDiscovery: DiscoveryManaging {
 
     func stopDiscovery() {
         stopCount += 1
+    }
+
+    func observeDiscoveredHosts(_ onChange: @escaping @MainActor () -> Void) {
+        self.onChange = onChange
     }
 }
 
